@@ -2,21 +2,31 @@ my dismissActiveNotifications()
 
 on dismissActiveNotifications()
 	tell application "System Events"
-		repeat # until there are none notifications left
-			set notification to my getFirstNotification()
+		set nDismissedNotifications to 0 
 
+		repeat # until there are none notifications left
+			my checkIfNotificationStuck(nDismissedNotifications)
+
+			set notification to my getFirstNotification()
 			if notification is missing value then
 				log "No notifications, done"
 				return
 			end if
 
-			# distinguish notifications based on number of buttons
-			set nButtons to (count buttons of notification)
-			if nButtons > 1 then
+			# notification have to be closed differently based on type
+			set notificationType to role description of notification
+
+			if notificationType contains "alert" then
 				my dismissAlertNotification(notification)
-			else # it's a "banner" notification
+			else if notificationType contains "banner" then
 				my dismissAllBannerNotifications()
+			else # something weird
+				display notification "Manual closing required" ¬
+					with title "Error: non-standard notification"
+				error "Error: unknown notification type"
 			end if
+
+			set nDismissedNotifications to (nDismissedNotifications + 1)
 		end repeat
 	end tell
 end dismissActiveNotifications
@@ -59,7 +69,7 @@ on dismissAlertNotification(notification)
 			# some applications make custom alert notifications without a close
 			#+ button (e.g. System Preferences with its update alert)
 			display notification "Manual closing required" ¬
-				with title "Error: non-standard alert notification"
+				with title "Error: notification has no close button"
 			error "Error: can't close alert notification, no close button"
 		end if
 	end tell
@@ -78,3 +88,15 @@ on dismissAllBannerNotifications()
 	#+ notifications as they persist restarts)
 	delay 1.5
 end dismissAllBannerNotifications
+
+on checkIfNotificationStuck(nDismissedNotifications)
+	# if we dismiss (or think we dismissed) more than 20 notifications
+	#+ abort as then there is a high probabily that a notification got
+	#+ stuck, then abort
+	set isNotificationStuck to (nDismissedNotifications > 20)
+	if isNotificationStuck then
+		display notification "Manual closing required" ¬
+			with title "Error: can't close notifications"
+		error "Error: can't close notifications, possibly a stuck notification"
+	end if
+end checkIfNotificationStuck
