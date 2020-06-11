@@ -1,34 +1,33 @@
 my dismissActiveNotifications()
 
 on dismissActiveNotifications()
-	tell application "System Events"
-		set nDismissedNotifications to 0 
+	set nDismissedNotifications to 0
 
-		repeat # until there are none notifications left
-			my checkIfNotificationStuck(nDismissedNotifications)
+	repeat # until there are none notifications left
+		my checkIfNotificationStuck(nDismissedNotifications)
 
-			set notification to my getFirstNotification()
-			if notification is missing value then
-				log "No notifications, done"
-				return
-			end if
+		set notification to my getFirstNotification()
+		if notification is missing value then
+			log "No notifications, done"
+			return
+		end if
 
-			# notification have to be closed differently based on type
-			set notificationType to role description of notification
+		# notification have to be closed differently based on type
+		tell application "System Events" ¬
+			to set notificationType to role description of notification
 
-			if notificationType contains "alert" then
-				my dismissAlertNotification(notification)
-			else if notificationType contains "banner" then
-				my dismissAllBannerNotifications()
-			else # something weird
-				display notification "Manual closing required" ¬
-					with title "Error: non-standard notification"
-				error "Error: unknown notification type"
-			end if
+		if notificationType contains "alert" then
+			my dismissAlertNotification(notification)
+		else if notificationType contains "banner" then
+			my dismissAllBannerNotifications()
+		else # something weird
+			display notification "Manual closing required" ¬
+				with title "Error: non-standard notification"
+			error "Error: unknown notification type"
+		end if
 
-			set nDismissedNotifications to (nDismissedNotifications + 1)
-		end repeat
-	end tell
+		set nDismissedNotifications to (nDismissedNotifications + 1)
+	end repeat
 end dismissActiveNotifications
 
 on getFirstNotification()
@@ -59,20 +58,20 @@ on getFirstNotification()
 end getFirstNotification
 
 on dismissAlertNotification(notification)
-	tell application "System Events"
-		set closeButton to a reference to button "Close" of notification
-		if closeButton exists then
-			log "Dismissing an alert notification"
-			click closeButton
-			delay 0.2 # wait (approximately) for it to disappear
-		else
-			# some applications make custom alert notifications without a close
-			#+ button (e.g. System Preferences with its update alert)
-			display notification "Manual closing required" ¬
-				with title "Error: notification has no close button"
-			error "Error: can't close alert notification, no close button"
-		end if
-	end tell
+	tell application "System Events" ¬
+		to set closeButton to a reference to button "Close" of notification
+
+	if closeButton exists then
+		log "Dismissing an alert notification"
+		tell application "System Events" to click closeButton
+		delay 0.2 # wait (approximately) for it to disappear
+	else
+		# some applications make custom alert notifications without a close
+		#+ button (e.g. System Preferences with its update alert)
+		display notification "Manual closing required" ¬
+			with title "Error: notification has no close button"
+		error "Error: can't close alert notification, no close button"
+	end if
 end dismissAlertNotification
 
 on dismissAllBannerNotifications()
