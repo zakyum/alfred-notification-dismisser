@@ -85,7 +85,7 @@ on dismissAllBannerNotifications()
 	# wait for NotificationCenter to "restart" so that we can
 	#+ normally process any remaining notifications (i.e. alert
 	#+ notifications as they persist restarts)
-	delay 1.5
+	delay 1
 end dismissAllBannerNotifications
 
 on checkIfNotificationStuck(nDismissedNotifications)
